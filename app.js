@@ -66,6 +66,12 @@
     document.getElementById('btn-print')      ?.addEventListener('click', CP.export.printActogram);
     document.getElementById('btn-clear-data') ?.addEventListener('click', onClearData);
 
+    // Tau Explorer
+    CP.tauExplorer.init((tau, awakeH) => {
+      _refreshDerived();
+      renderAll();
+    });
+
     // Geolocation
     CP.sky.tryGeolocation(async (lat, lng) => {
       const name = await CP.sky.reverseGeocode(lat, lng);
