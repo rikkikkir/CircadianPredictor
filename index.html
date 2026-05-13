@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Circadian Predictor — sleep tracking and cycle forecasting for Non-24 and free-running rhythms.">
+<meta name="theme-color" content="#111418">
+<title>Circadian Predictor</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- ── App Header ─────────────────────────────────────────────────────────── -->
+<header class="app-header" role="banner">
+  <div>
+    <h1>Circadian Predictor</h1>
+    <div class="tagline">Track your cycle. Know your time.</div>
+  </div>
+  <button class="btn btn-outline" id="share-btn" aria-label="Share current wheel state">⎘ Share</button>
+</header>
+
+<!-- ── Now Panel ──────────────────────────────────────────────────────────── -->
+<main id="panel-now" class="panel active" role="main" aria-label="Now — current cycle position">
+
+  <!-- Empty state -->
+  <div class="no-state-prompt" id="no-state-prompt" role="status">
+    <strong>Your wheel is waiting.</strong>
+    Enter your last wake time below, or tap "I Just Woke Up" to start tracking.
+  </div>
+
+  <!-- Ongoing sleep badge -->
+  <div class="ongoing-badge" id="ongoing-badge" style="display:none" role="status" aria-live="polite">
+    <span class="ongoing-dot" aria-hidden="true"></span>
+    <span class="ongoing-text">Sleeping…</span>
+  </div>
+
+  <!-- Circadian Wheel -->
+  <div id="wheel-section" style="display:none">
+    <div class="wheel-wrap" aria-label="Circadian wheel — your cycle position">
+      <svg id="wheel-svg" viewBox="-20 -20 480 480" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Circular diagram showing current position in your personal sleep-wake cycle">
+        <defs>
+          <pattern id="wheel-sleep-stars" x="0" y="0" width="22" height="22" patternUnits="userSpaceOnUse">
+            <path d="M11,3.7 L12.9,8.4 L17.8,8.7 L13.7,12.0 L15.2,16.9 L11,14.2 L6.7,16.7 L8.2,12.1 L4.2,8.9 L9.1,8.5 Z" fill="none" stroke="rgba(140,215,200,0.60)" stroke-width="1.15" stroke-linejoin="round" stroke-linecap="round"/>
+            <path d="M10.8,4.1 L12.7,8.7 L17.6,9.1 L13.5,12.3 L15.0,17.1 L10.8,14.5 L6.5,17.0 L8.0,12.4 L4.0,9.2 L8.9,8.8 Z" fill="none" stroke="rgba(140,215,200,0.22)" stroke-width="0.7" stroke-linejoin="round" stroke-linecap="round"/>
+          </pattern>
+        </defs>
+        <!-- Outer sky ring -->
+        <g id="wheel-svg-outer-clock" aria-hidden="true"></g>
+        <!-- Inner pie segments -->
+        <g id="wheel-svg-pie" aria-hidden="true"></g>
+        <!-- Ring borders -->
+        <circle cx="220" cy="220" r="170" fill="none" stroke="#333" stroke-width="1"/>
+        <!-- Wake label at top -->
+        <text x="220" y="23" fill="#c9a84c" font-size="12" font-weight="600" text-anchor="middle" dominant-baseline="middle" font-family="Inter,sans-serif" aria-hidden="true">Wake</text>
+        <!-- Live hand -->
+        <g id="dial-hand" aria-hidden="true">
+          <line id="wheel-svg-hand" x1="220" y1="220" x2="220" y2="76" stroke="#ff2d78" stroke-width="2.5" stroke-linecap="round"/>
+        </g>
+        <!-- Now label -->
+        <g id="outer-now" aria-hidden="true">
+          <text id="wheel-svg-now-lbl" fill="#ff2d78" font-size="17" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="Inter,sans-serif"></text>
+        </g>
+        <!-- Center dot -->
+        <circle cx="220" cy="220" r="5" fill="#c9a84c" aria-hidden="true"/>
+      </svg>
+    </div>
+  </div>
+
+  <!-- Stats card -->
+  <div class="now-card" id="stats-card" style="display:none" role="status" aria-live="polite" aria-label="Cycle status"></div>
+
+  <!-- Tau strip -->
+  <div class="tau-strip" id="tau-strip">
+    <span>Personal cycle (tau)</span>
+    <span class="tau-val" id="tau-strip-val">—</span>
+  </div>
+
+  <!-- Tap buttons -->
+  <div class="tap-area" role="group" aria-label="Sleep tracking">
+    <button class="tap-btn tap-btn-sleep" id="btn-going-sleep" aria-label="Start sleep — record current time as sleep start">
+      🌙 Going to Sleep
+    </button>
+    <button class="tap-btn tap-btn-wake" id="btn-just-woke" style="display:none" aria-label="Record wake — close current sleep entry">
+      ☀️ I Just Woke Up
+    </button>
+    <button class="tap-btn tap-btn-sleepless" id="btn-sleepless" aria-label="Log a sleepless night">
+      Log Sleepless Night
+    </button>
+  </div>
+
+  <!-- Narrative form (manual anchor) -->
+  <div class="narrative-form" id="narrative-form">
+    <p class="narrative-line dim" style="font-size:.9rem;margin-bottom:8px">Or set your last wake time manually:</p>
+    <p class="narrative-line">
+      I woke on
+      <input type="date" id="wake-date" class="inline-date" aria-label="Wake date"/>
+      at
+      <input type="time" id="wake-time" class="inline-time" aria-label="Wake time"/>.
+    </p>
+  </div>
+
+  <details class="explainer">
+    <summary>What is a circadian wheel?</summary>
+    <div class="explainer-body">
+      <p>Your internal clock runs on a cycle called <strong>tau</strong> (τ). For most people it's
+      close to 24 hours — daylight keeps it synchronized. For some people, tau runs longer:
+      24.5h, 25h, or more. Without anchors, sleep drifts progressively later each day,
+      cycling through all 24 hours every few weeks. This is Non-24-Hour Sleep-Wake Disorder.</p>
+      <p>The wheel shows where you are in your personal cycle <em>right now</em>. Your wake time
+      is always at the top. The outer ring maps your cycle against the 24-hour clock, colored
+      with the actual sky at each hour — dawn, daylight, dusk, night.</p>
+      <p>The pink hand shows the current moment. The gold circle at the top is your last wake.</p>
+      <p>Built by <a href="https://rikkikkir.github.io/circadian" target="_blank" rel="noopener">Rikki Delaine</a>,
+      who has a measured tau of 25.40 hours.</p>
+    </div>
+  </details>
+
+</main>
+
+<!-- ── History Panel ───────────────────────────────────────────────────────── -->
+<section id="panel-history" class="panel" aria-label="History — actogram">
+  <div class="panel-heading">
+    <h2>Sleep History</h2>
+    <div class="acto-controls" role="group" aria-label="Zoom controls">
+      <button class="acto-btn" id="acto-zoom-out" aria-label="Zoom out">−</button>
+      <span id="acto-zoom-lbl" style="font-size:.8rem;color:var(--dim2)" aria-live="polite">5px/row</span>
+      <button class="acto-btn" id="acto-zoom-in" aria-label="Zoom in">+</button>
+      <button class="acto-btn" id="btn-print" aria-label="Print actogram for doctor">🖨 Print</button>
+    </div>
+  </div>
+
+  <p class="section-note">One row per day. Sleep blocks in navy, gold line shows predicted wake. Zoom in for detail, use the minimap to navigate.</p>
+
+  <div class="acto-empty" id="acto-empty" style="display:none" role="status">
+    No sleep entries yet. Start logging from the <strong>Now</strong> tab.
+  </div>
+
+  <div class="acto-scroll" id="acto-scroll" role="img" aria-label="Actogram showing sleep history">
+    <canvas id="acto-canvas"></canvas>
+  </div>
+
+  <div class="mini-wrap" aria-label="Actogram minimap — click to navigate">
+    <canvas id="mini-canvas" aria-hidden="true"></canvas>
+    <div id="mini-vp" aria-hidden="true"></div>
+  </div>
+
+  <div class="acto-legend" aria-label="Legend">
+    <div class="legend-item">
+      <div class="legend-swatch" style="background:rgba(28,31,74,0.85)" aria-hidden="true"></div>
+      Sleep block
+    </div>
+    <div class="legend-item">
+      <div class="legend-swatch" style="background:rgba(255,190,50,0.3)" aria-hidden="true"></div>
+      Daylight
+    </div>
+    <div class="legend-item">
+      <div class="legend-swatch" style="background:rgba(201,168,76,0.78);width:4px" aria-hidden="true"></div>
+      Natural thread (predicted wake)
+    </div>
+  </div>
+
+</section>
+
+<!-- ── Forecast Panel ─────────────────────────────────────────────────────── -->
+<section id="panel-forecast" class="panel" aria-label="Forecast — next 7 days">
+  <div class="panel-heading">
+    <h2>7-Day Forecast</h2>
+    <button class="btn btn-outline" id="btn-export-ics" aria-label="Export forecast to calendar (.ics)">📅 .ics</button>
+  </div>
+
+  <p class="section-note">Predicted sleep and wake windows based on your personal tau. Confidence fades for days further out — your cycle is real, but life is variable.</p>
+
+  <div class="fc-empty" id="fc-empty" style="display:none" role="status">
+    Log at least one wake time from the <strong>Now</strong> tab to generate a forecast.
+  </div>
+
+  <div id="forecast-rows" role="list" aria-label="7-day forecast rows"></div>
+
+  <div class="fc-conf-legend" aria-label="Confidence legend">
+    <span style="color:rgba(45,48,112,0.9)">■</span> Days 1–3 (high confidence)
+    <span style="color:rgba(80,88,160,0.65)">■</span> Days 4–5 (medium)
+    <span style="color:rgba(120,128,192,0.4)">■</span> Days 6–7 (low)
+  </div>
+
+</section>
+
+<!-- ── Log Panel ───────────────────────────────────────────────────────────── -->
+<section id="panel-log" class="panel" aria-label="Sleep log">
+  <div class="panel-heading">
+    <h2>Sleep Log</h2>
+  </div>
+
+  <p class="section-note">All logged sleep entries, newest first. Tap <em>Edit</em> to correct times, <em>Note</em> to add context.</p>
+
+  <div class="log-empty" id="log-empty" style="display:none" role="status">
+    No entries yet. Tap <strong>Going to Sleep</strong> from the Now tab to start.
+  </div>
+  <div id="log-entries" role="list" aria-label="Sleep log entries"></div>
+
+</section>
+
+<!-- ── Settings Panel ─────────────────────────────────────────────────────── -->
+<section id="panel-settings" class="panel" aria-label="Settings">
+  <h2 style="margin-bottom:20px">Settings</h2>
+
+  <!-- Tau -->
+  <div class="settings-section">
+    <span class="settings-label">Personal Cycle Length (tau)</span>
+    <div class="settings-row">
+      <div class="tau-display" id="tau-display">—</div>
+      <button class="btn btn-ghost" id="tau-lock-btn" aria-label="Toggle auto-calculate tau">🔓 Auto</button>
+    </div>
+    <div class="tau-calc-note" id="tau-calc-note"></div>
+
+    <div style="margin-top:12px">
+      <label class="settings-label" for="settings-tau">Set manually (23.0 – 27.0):</label>
+      <input type="number" id="settings-tau" class="inline-number"
+             min="23.0" max="27.0" step="0.1" aria-label="Tau value in hours"/>
+      <span class="dim" style="font-size:.9rem"> hours</span>
+    </div>
+
+    <div class="preset-chips" role="group" aria-label="Tau presets">
+      <button class="preset-chip" data-tau="24.0" aria-label="Standard 24 hour cycle">Standard (24h)</button>
+      <button class="preset-chip" data-tau="24.5" aria-label="Slightly delayed 24.5 hour cycle">Slightly delayed (24.5h)</button>
+      <button class="preset-chip" data-tau="25.0" aria-label="Non-24 25 hour cycle">Non-24 (25h)</button>
+      <button class="preset-chip" data-tau="25.4" aria-label="Non-24 25.4 hour cycle like Rikki">Non-24 · 25.4h</button>
+    </div>
+
+    <!-- Awake slider -->
+    <div class="sleep-split" style="margin-top:16px">
+      <div class="sleep-split-labels">
+        <span id="awake-label">Awake 13h 24m</span>
+        <span id="sleep-label">Sleep 12h</span>
+      </div>
+      <input type="range" id="awake-slider" class="sleep-slider"
+             min="6" max="22" step="0.25" value="13.4"
+             aria-label="Hours awake per cycle"/>
+    </div>
+  </div>
+
+  <!-- Location -->
+  <div class="settings-section">
+    <span class="settings-label">Location (for sunrise/sunset)</span>
+    <div class="location-status" id="location-display">Detecting…</div>
+    <p style="font-size:.78rem;color:var(--dim2);margin-top:4px">Used only to calculate accurate sky colors. Never stored on a server.</p>
+  </div>
+
+  <!-- Export -->
+  <div class="settings-section">
+    <span class="settings-label">Export Data</span>
+    <div class="btn-row">
+      <button class="btn btn-outline" id="btn-export-csv"  aria-label="Export sleep log as CSV">CSV</button>
+      <button class="btn btn-outline" id="btn-export-json" aria-label="Export all data as JSON">JSON</button>
+      <button class="btn btn-outline" id="btn-export-ics-settings" aria-label="Export forecast as calendar file">📅 .ics</button>
+    </div>
+    <p style="font-size:.78rem;color:var(--dim2);margin-top:8px">CSV and JSON are suitable for Google Sheets or sharing with a doctor.</p>
+  </div>
+
+  <!-- Danger zone -->
+  <div class="settings-section">
+    <span class="settings-label" style="color:#8b3020">Danger Zone</span>
+    <button class="btn btn-danger" id="btn-clear-data" aria-label="Delete all sleep data permanently">Delete All Data</button>
+  </div>
+
+</section>
+
+<!-- ── Edit / Note Modal ───────────────────────────────────────────────────── -->
+<div class="modal-overlay" id="edit-modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+  <div class="modal">
+    <h3 id="modal-title">Edit Entry</h3>
+    <div class="modal-row">
+      <label for="modal-start">Sleep start</label>
+      <input type="datetime-local" id="modal-start" class="modal-input" aria-label="Sleep start time"/>
+    </div>
+    <div class="modal-row">
+      <label for="modal-end">Wake time</label>
+      <input type="datetime-local" id="modal-end" class="modal-input" aria-label="Wake time"/>
+    </div>
+    <div class="modal-row">
+      <label for="modal-note">Note (optional)</label>
+      <input type="text" id="modal-note" class="modal-input"
+             placeholder="e.g. Skipped sleep, travel, stress event…" aria-label="Note about this entry"/>
+    </div>
+    <div class="modal-btns">
+      <button class="modal-cancel" id="modal-cancel">Cancel</button>
+      <button class="modal-save"   id="modal-save">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Bottom Nav ──────────────────────────────────────────────────────────── -->
+<nav class="bottom-nav" role="navigation" aria-label="Main navigation">
+  <button class="nav-btn active" data-panel="now"      aria-label="Now — current cycle position">
+    <span class="nav-icon" aria-hidden="true">◎</span>
+    Now
+  </button>
+  <button class="nav-btn" data-panel="history"  aria-label="History — sleep actogram">
+    <span class="nav-icon" aria-hidden="true">📊</span>
+    History
+  </button>
+  <button class="nav-btn" data-panel="forecast" aria-label="Forecast — 7-day prediction">
+    <span class="nav-icon" aria-hidden="true">🔮</span>
+    Forecast
+  </button>
+  <button class="nav-btn" data-panel="log"      aria-label="Log — sleep entries">
+    <span class="nav-icon" aria-hidden="true">📋</span>
+    Log
+  </button>
+  <button class="nav-btn" data-panel="settings" aria-label="Settings">
+    <span class="nav-icon" aria-hidden="true">⚙</span>
+    Settings
+  </button>
+</nav>
+
+<!-- ── Scripts ────────────────────────────────────────────────────────────── -->
+<script src="js/sky.js"></script>
+<script src="js/store.js"></script>
+<script src="js/calculator.js"></script>
+<script src="js/wheel.js"></script>
+<script src="js/actogram.js"></script>
+<script src="js/forecast.js"></script>
+<script src="js/export.js"></script>
+<script src="app.js"></script>
+
+</body>
+</html>
