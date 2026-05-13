@@ -164,9 +164,22 @@
       if (noPrompt)     noPrompt.style.display     = '';
     }
 
-    // Tau strip
+    // Tau strip — show calculated value or "not yet calculated"
     const tauStrip = document.getElementById('tau-strip-val');
-    if (tauStrip) tauStrip.textContent = `${_tauH.toFixed(2)}h`;
+    const hasCalc  = CP.calc.calcTau(_entries) !== null;
+    if (tauStrip) {
+      if (hasCalc) {
+        tauStrip.textContent = `${_tauH.toFixed(2)}h`;
+        tauStrip.title = 'Auto-calculated from your logged wake times';
+      } else if (_settings.tauLocked) {
+        tauStrip.textContent = `${_tauH.toFixed(2)}h (manual)`;
+        tauStrip.title = 'Manually set in Settings';
+      } else {
+        tauStrip.textContent = '— log 4+ wake times to calculate';
+        tauStrip.title = 'Default 25.4h used until enough data is logged';
+        tauStrip.style.fontSize = '.72rem';
+      }
+    }
 
     // Ongoing badge
     const badge = document.getElementById('ongoing-badge');
@@ -181,13 +194,22 @@
     }
 
     // Tap buttons
-    const btnSleep  = document.getElementById('btn-going-sleep');
-    const btnWake   = document.getElementById('btn-just-woke');
+    // "I Just Woke Up" shows when: (a) there's an ongoing sleep entry to close,
+    // OR (b) there's no anchor yet — new user needs this to set their first anchor.
+    const btnSleep = document.getElementById('btn-going-sleep');
+    const btnWake  = document.getElementById('btn-just-woke');
+    const isNew    = !_anchorMs && !ongoing;
 
     if (ongoing) {
+      // Currently sleeping — only show wake button
       if (btnSleep) btnSleep.style.display = 'none';
       if (btnWake)  btnWake.style.display  = '';
+    } else if (isNew) {
+      // Brand new user — show BOTH so they can set their first anchor
+      if (btnSleep) btnSleep.style.display = '';
+      if (btnWake)  btnWake.style.display  = '';
     } else {
+      // Has history, currently awake — show sleep button
       if (btnSleep) btnSleep.style.display = '';
       if (btnWake)  btnWake.style.display  = 'none';
     }
