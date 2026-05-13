@@ -375,6 +375,137 @@ h3 { font-family: 'Playfair Display', serif; font-size: 1.1rem; font-weight: 400
   font-size: .9rem;
 }
 
+/* ── Right Now section ──────────────────────────────────────────────────────── */
+.right-now-section {
+  max-width: 640px;
+  margin: 0 auto 20px;
+  background: var(--bg2);
+  border: 1px solid var(--div);
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+/* Name prompt */
+.name-prompt {
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--div);
+  background: var(--bg3);
+}
+.name-prompt-label {
+  font-size: .68rem;
+  color: var(--dim2);
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  margin-bottom: 7px;
+}
+.name-prompt-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.name-input {
+  background: var(--bg);
+  border: 1px solid var(--dim3);
+  border-radius: var(--r);
+  color: var(--warm);
+  font-family: 'Inter', sans-serif;
+  font-size: .86rem;
+  padding: 5px 10px;
+  outline: none;
+  width: 148px;
+  flex-shrink: 0;
+}
+.name-input:focus { border-color: var(--gold); }
+.pronoun-chips { display: flex; gap: 4px; }
+.pronoun-chip {
+  background: transparent;
+  border: 1px solid var(--dim3);
+  border-radius: 4px;
+  color: var(--dim2);
+  font-family: 'Inter', sans-serif;
+  font-size: .7rem;
+  padding: 4px 8px;
+  cursor: pointer;
+  transition: all .15s;
+}
+.pronoun-chip.active { border-color: var(--gold); color: var(--gold); }
+.pronoun-chip:hover:not(.active) { border-color: var(--dim); color: var(--warm); }
+.name-save-btn { font-size: .76rem !important; padding: 5px 12px !important; }
+
+/* Grid layout */
+.right-now-grid {
+  display: grid;
+  grid-template-columns: 200px 1fr;
+}
+.sw-wheel-col {
+  padding: 10px;
+  border-right: 1px solid var(--div);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+#sw-svg { width: 100%; max-width: 200px; display: block; }
+.sw-card-col {
+  padding: 16px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 11px;
+  justify-content: center;
+}
+.sw-data-label {
+  font-size: .66rem;
+  text-transform: uppercase;
+  letter-spacing: .1em;
+  color: var(--dim2);
+  margin-bottom: 2px;
+}
+.sw-data-value {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--warm);
+  font-variant-numeric: tabular-nums;
+  line-height: 1.2;
+}
+.sw-data-sub {
+  font-size: .74rem;
+  color: var(--dim2);
+  margin-top: 2px;
+}
+.sw-divider { height: 1px; background: var(--div); }
+.sw-progress-track {
+  height: 4px;
+  background: var(--bg3);
+  border-radius: 2px;
+  overflow: hidden;
+  margin-bottom: 4px;
+}
+.sw-progress-fill {
+  height: 100%;
+  background: var(--gold);
+  border-radius: 2px;
+  transition: width .8s ease;
+}
+.sw-progress-lbl { font-size: .7rem; color: var(--dim2); }
+.sw-narrative {
+  font-size: .8rem;
+  color: var(--dim);
+  line-height: 1.65;
+  margin-top: 2px;
+}
+.sw-narrative strong { color: var(--warm); }
+
+@media (max-width: 500px) {
+  .right-now-grid { grid-template-columns: 1fr; }
+  .sw-wheel-col {
+    border-right: none;
+    border-bottom: 1px solid var(--div);
+    max-width: 220px;
+    margin: 0 auto;
+    padding: 12px;
+  }
+}
+
 /* ── Tau Explorer ───────────────────────────────────────────────────────────── */
 .tau-explorer {
   margin-top: 28px;

@@ -72,6 +72,63 @@
   <!-- Stats card -->
   <div class="now-card" id="stats-card" style="display:none" role="status" aria-live="polite" aria-label="Cycle status"></div>
 
+  <!-- Right Now — simple wheel + data card -->
+  <div id="right-now-section" class="right-now-section" style="display:none" aria-label="Right now — cycle status">
+
+    <!-- Name prompt (shown until user sets a name) -->
+    <div id="name-prompt" class="name-prompt">
+      <p class="name-prompt-label">Personalize this view</p>
+      <div class="name-prompt-row">
+        <input type="text" id="name-input" class="name-input" placeholder="Name (optional)" maxlength="40" aria-label="Your name"/>
+        <div class="pronoun-chips" role="group" aria-label="Pronouns">
+          <button class="pronoun-chip active" data-p="they">they/them</button>
+          <button class="pronoun-chip" data-p="she">she/her</button>
+          <button class="pronoun-chip" data-p="he">he/him</button>
+        </div>
+        <button class="btn btn-outline name-save-btn" id="name-save-btn" aria-label="Save name">Save →</button>
+      </div>
+    </div>
+
+    <!-- Side-by-side layout -->
+    <div class="right-now-grid">
+
+      <!-- Simple two-arc wheel -->
+      <div class="sw-wheel-col">
+        <svg id="sw-svg" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg"
+             role="img" aria-label="Simplified sleep-wake wheel showing current cycle position"></svg>
+      </div>
+
+      <!-- Data card -->
+      <div class="sw-card-col">
+        <div class="sw-data-section">
+          <div class="sw-data-label">Personal Hour</div>
+          <div class="sw-data-value" id="sw-personal-hour">—</div>
+          <div class="sw-data-sub" id="sw-cycle-num">—</div>
+        </div>
+
+        <div class="sw-divider"></div>
+
+        <div class="sw-data-section">
+          <div class="sw-data-label" id="sw-event-label">Next Wake</div>
+          <div class="sw-data-value" id="sw-next-time">—</div>
+          <div class="sw-data-sub" id="sw-until">—</div>
+        </div>
+
+        <div class="sw-divider"></div>
+
+        <div class="sw-progress-wrap">
+          <div class="sw-progress-track" role="progressbar" aria-label="Cycle progress">
+            <div class="sw-progress-fill" id="sw-progress-bar" style="width:0%"></div>
+          </div>
+          <div class="sw-progress-lbl" id="sw-progress-lbl" aria-live="polite">Cycle progress</div>
+        </div>
+
+        <p class="sw-narrative" id="sw-narrative" aria-live="polite"></p>
+      </div>
+
+    </div>
+  </div>
+
   <!-- Tau strip -->
   <div class="tau-strip" id="tau-strip">
     <span>Personal cycle (tau)</span>
@@ -363,6 +420,7 @@
 <script src="js/forecast.js"></script>
 <script src="js/export.js"></script>
 <script src="js/tau-explorer.js"></script>
+<script src="js/simple-wheel.js"></script>
 <script src="app.js"></script>
 
 </body>

@@ -3,11 +3,12 @@
 
 (function () {
   // ── State ─────────────────────────────────────────────────────────────────────
-  let _settings  = null;
-  let _entries   = null;
-  let _anchorMs  = null;
-  let _tauH      = null;
-  let _awakeH    = null;
+  let _settings       = null;
+  let _entries        = null;
+  let _anchorMs       = null;
+  let _tauH           = null;
+  let _awakeH         = null;
+  let _pendingPronoun = 'they';
 
   // ── Boot ──────────────────────────────────────────────────────────────────────
   function init() {
@@ -65,6 +66,25 @@
     document.getElementById('btn-export-ics-settings')?.addEventListener('click', () => CP.export.exportICS(_anchorMs, _tauH, _awakeH));
     document.getElementById('btn-print')      ?.addEventListener('click', CP.export.printActogram);
     document.getElementById('btn-clear-data') ?.addEventListener('click', onClearData);
+
+    // Name prompt
+    _pendingPronoun = (_settings && _settings.pronoun) || 'they';
+    document.querySelectorAll('.pronoun-chip').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.p === _pendingPronoun);
+      btn.addEventListener('click', () => {
+        _pendingPronoun = btn.dataset.p;
+        document.querySelectorAll('.pronoun-chip').forEach(b =>
+          b.classList.toggle('active', b.dataset.p === _pendingPronoun));
+      });
+    });
+    document.getElementById('name-save-btn')?.addEventListener('click', () => {
+      const nameInput = document.getElementById('name-input');
+      const name = nameInput ? nameInput.value.trim() : '';
+      _settings = CP.store.saveSettings({ name, pronoun: _pendingPronoun });
+      const namePrompt = document.getElementById('name-prompt');
+      if (namePrompt) namePrompt.style.display = 'none';
+      if (_anchorMs) CP.simpleWheel.render('sw-svg', _anchorMs, _tauH, _awakeH, _settings.name, _settings.pronoun);
+    });
 
     // Tau Explorer
     CP.tauExplorer.init((tau, awakeH) => {
@@ -218,6 +238,21 @@
       // Has history, currently awake — show sleep button
       if (btnSleep) btnSleep.style.display = '';
       if (btnWake)  btnWake.style.display  = 'none';
+    }
+
+    // Right Now section — simple wheel + data card
+    const rightNowSection = document.getElementById('right-now-section');
+    if (_anchorMs) {
+      if (rightNowSection) rightNowSection.style.display = '';
+      const namePrompt = document.getElementById('name-prompt');
+      if (namePrompt) namePrompt.style.display = _settings.name ? 'none' : '';
+      // Pre-fill name input if already set
+      const nameInput = document.getElementById('name-input');
+      if (nameInput && _settings.name && !nameInput.value) nameInput.value = _settings.name;
+      CP.simpleWheel.render('sw-svg', _anchorMs, _tauH, _awakeH, _settings.name, _settings.pronoun);
+      CP.simpleWheel.startLive('sw-svg', _anchorMs, _tauH, _awakeH, _settings.name, _settings.pronoun);
+    } else {
+      if (rightNowSection) rightNowSection.style.display = 'none';
     }
 
     // Restore narrative form if anchor set
